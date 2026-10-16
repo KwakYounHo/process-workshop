@@ -45,7 +45,7 @@ impl Workshop {
             workers: Vec::new(),
             receiver_handles: Vec::new(),
             event_rx,
-            pixels: vec![0u8; 512* 512 * 3],
+            pixels: vec![0u8; 512 * 512 * 3],
             tiles: [TileState::Pending; 64],
             texture: None,
             completed: 0,
@@ -59,13 +59,14 @@ impl Workshop {
             let log = std::fs::File::create(format!("output/viewer-worker-{label}.log"))?;
             let mut child = Command::new(&worker_exe)
                 .arg("worker")
-                .arg(if label =='A' { "100" } else { "700" })
+                .arg(if label == 'A' { "100" } else { "700" })
                 .stdin(Stdio::piped())
                 .stdout(Stdio::piped())
                 .stderr(Stdio::from(log))
                 .spawn()?;
             let to_worker = child.stdin.take().expect("Worker stdin is piped");
-            let mut from_worker = BufReader::new(child.stdout.take().expect("Worker stdout is piped"));
+            let mut from_worker =
+                BufReader::new(child.stdout.take().expect("Worker stdout is piped"));
             let sender = event_tx.clone();
             let handle = thread::spawn(move || {
                 loop {
@@ -167,7 +168,7 @@ impl Workshop {
                 format!(
                     "Worker {} stdout closed before completion",
                     ['A', 'B'][worker_index]
-                    ),
+                ),
             )),
             Ok(WorkerEvent::ReadFailed(error)) => Err(error),
             Err(TryRecvError::Empty) => Ok(false),
@@ -217,10 +218,11 @@ impl eframe::App for Workshop {
                     !self.started && self.error.is_none(),
                     egui::Button::new("Start rendering"),
                 )
-                .clicked() {
-                    if let Err(error) = self.start() {
-                        self.error = Some(error.to_string());
-                    }
+                .clicked()
+            {
+                if let Err(error) = self.start() {
+                    self.error = Some(error.to_string());
+                }
             }
             ui.add(
                 egui::ProgressBar::new(self.completed as f32 / 64.0)
@@ -280,7 +282,6 @@ impl eframe::App for Workshop {
     }
 }
 
-
 impl Drop for Workshop {
     fn drop(&mut self) {
         for (mut child, to_worker) in self.workers.drain(..) {
@@ -303,7 +304,7 @@ fn main() -> io::Result<()> {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([580.0, 710.0])
             .with_min_inner_size([340.0, 400.0]),
-            ..Default::default()
+        ..Default::default()
     };
     eframe::run_native(
         "Process Workshop",
